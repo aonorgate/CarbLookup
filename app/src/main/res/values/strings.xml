@@ -2222,4 +2222,27 @@
     <string name="li3_smoothing_summary">Average recent readings to make them smoother</string>
     <string name="sensor_cannot_be_calibrated">This sensor cannot be calibrated.</string>
     <string name="notification_listener_permission_explanation">Permission is needed to receive data from other applications. xDrip does not do anything beyond this scope. Please enable xDrip on the next screen</string>
+    <!-- Reminder insulin dose logging -->
+    <string name="reminder_dose_description">%1$s U %2$s</string>
+    <string name="reminder_dose_logged">Logged %1$s</string>
+    <string name="reminder_dose_already_logged">Dose already logged for this reminder</string>
+    <string name="reminder_dose_needs_multiple_insulins">Turn on Multiple insulin types in Settings to log reminder doses, so long acting insulin is not counted as rapid acting</string>
+    <string name="reminder_dose_unknown_insulin">Insulin type %1$s is not available; edit the reminder</string>
+    <string name="reminder_dose_invalid_units">Enter a dose between 0 and 100 units</string>
+    <string name="reminder_dose_none">This reminder has no dose</string>
+    <string name="reminder_dose_failed">Could not log the dose</string>
+    <string name="reminder_dose_taken_button">Taken: %1$s</string>
+    <string name="reminder_dose_snooze_button">Snooze</string>
+    <string name="reminder_dose_undo_button">Undo</string>
+    <string name="reminder_dose_auto_logged_notification">Logged %1$s automatically. Tap Undo if it was not taken.</string>
+    <string name="reminder_dose_auto_failed_notification">Could not log %1$s automatically: %2$s</string>
+    <string name="reminder_dose_undone">Dose removed; you will be reminded again in %1$s</string>
+    <string name="reminder_dose_log_question">Log %1$s as taken now?</string>
+    <string name="reminder_dose_log_and_done">Log and done</string>
+    <string name="reminder_dose_done_only">Done only</string>
+    <string name="reminder_dose_checkbox">Log insulin dose</string>
+    <string name="reminder_dose_units_hint">Units</string>
+    <string name="reminder_dose_auto_checkbox">Log automatically when due</string>
+    <string name="reminder_dose_auto_warning">The dose will be logged even if you miss it. Use Undo on the notification if it was not taken.</string>
+    <string name="reminder_dose_no_insulins">No insulin types available</string>
 </resources>

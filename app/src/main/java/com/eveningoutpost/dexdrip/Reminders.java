@@ -35,6 +35,7 @@ import android.os.PowerManager;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -61,7 +62,10 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -81,6 +85,10 @@ import com.eveningoutpost.dexdrip.profileeditor.DatePickerFragment;
 import com.eveningoutpost.dexdrip.profileeditor.ProfileAdapter;
 import com.eveningoutpost.dexdrip.profileeditor.TimePickerFragment;
 import com.eveningoutpost.dexdrip.receiver.ReminderReceiver;
+import com.eveningoutpost.dexdrip.insulin.Insulin;
+import com.eveningoutpost.dexdrip.insulin.InsulinManager;
+import com.eveningoutpost.dexdrip.insulin.MultipleInsulins;
+import com.eveningoutpost.dexdrip.insulin.reminder.ReminderDoseLogger;
 import com.eveningoutpost.dexdrip.utils.HomeWifi;
 import com.github.amlcurran.showcaseview.OnShowcaseEventListener;
 import com.github.amlcurran.showcaseview.ShowcaseView;
@@ -115,6 +123,11 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
 
     public final List<Reminder> reminders = new ArrayList<>();
     public static final String REMINDER_ACTION = "reminder";
+    public static final String EXTRA_DOSE_TAKEN = "dose_taken";
+    public static final String EXTRA_DOSE_UNDO = "dose_undo";
+    public static final String EXTRA_DOSE_DUE = "dose_due";
+    public static final String EXTRA_FROM_ACTION = "from_action";
+    public static final long DOSE_UNDO_SNOOZE = Constants.MINUTE_IN_MS * 30;
 
     private AlertDialog dialog;
     private EditText reminderDaysEdt;
@@ -399,7 +412,9 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
             final MyViewHolder holder = (MyViewHolder) base_holder; // cast it
             final Reminder reminder_item = reminders.get(position);
             holder.position = position; // should we use getadapterposition instead?
-            holder.title_text.setText(reminder_item.getTitle());
+            holder.title_text.setText(reminder_item.hasDose()
+                    ? reminder_item.getTitle() + " (" + ReminderDoseLogger.describe(reminder_item) + ")"
+                    : reminder_item.getTitle());
 
 
             String lastDetails = "";
@@ -484,14 +499,68 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
                 // swipe right == reschedule
                 cancelAlert();
                 last_swiped = remind;
-                if (!rescheduleOrCancelReminder(remind)) {
-                    reinjectDelayed(remind);
+                if (ReminderDoseLogger.isDosePending(remind)) {
+                    // as we swiped off in UI we always must reinject
+                    reminders.remove(position);
+                    notifyItemRemoved(position);
+                    askToLogDose(remind);
+                } else {
+                    finishSwipeRight(remind);
+                    // as we swiped off in UI we always must reinject
+                    reminders.remove(position);
+                    notifyItemRemoved(position);
                 }
-                // as we swiped off in UI we always must reinject
-                reminders.remove(position);
-                notifyItemRemoved(position);
             }
         }
+    }
+
+    private void finishSwipeRight(final Reminder remind) {
+        if (!rescheduleOrCancelReminder(remind)) {
+            reinjectDelayed(remind);
+        }
+    }
+
+    // Offer to log the reminder's dose when it is swiped as done; the amount can be changed for this occurrence
+    private void askToLogDose(final Reminder remind) {
+        final AtomicBoolean handled = new AtomicBoolean(false);
+        final EditText unitsEdit = new EditText(this);
+        unitsEdit.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        unitsEdit.setText(ReminderDoseLogger.formatUnits(remind.dose_units));
+        unitsEdit.setHint(R.string.reminder_dose_units_hint);
+        final LinearLayout box = new LinearLayout(this);
+        final int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        box.setPadding(pad, 0, pad, 0);
+        box.addView(unitsEdit, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        new AlertDialog.Builder(this)
+                .setTitle(remind.getTitle())
+                .setMessage(xdrip.gs(R.string.reminder_dose_log_question, ReminderDoseLogger.describe(remind)))
+                .setView(box)
+                .setPositiveButton(R.string.reminder_dose_log_and_done, (d, w) -> {
+                    handled.set(true);
+                    final double units = JoH.tolerantParseDouble(unitsEdit.getText().toString(), -1);
+                    final ReminderDoseLogger.Result result = ReminderDoseLogger.logDose(remind, tsl(), units);
+                    JoH.static_toast_long(result == ReminderDoseLogger.Result.LOGGED
+                            ? xdrip.gs(R.string.reminder_dose_logged, ReminderDoseLogger.describe(units, remind.dose_insulin))
+                            : ReminderDoseLogger.message(result, remind));
+                    if (result.isSuccess()) {
+                        finishSwipeRight(remind);
+                    } else {
+                        reinjectDelayed(remind);
+                    }
+                })
+                .setNeutralButton(R.string.reminder_dose_done_only, (d, w) -> {
+                    handled.set(true);
+                    finishSwipeRight(remind);
+                })
+                .setNegativeButton(R.string.cancel, (d, w) -> {
+                    handled.set(true);
+                    reinjectDelayed(remind);
+                })
+                .setOnDismissListener(d -> {
+                    if (!handled.getAndSet(true)) reinjectDelayed(remind);
+                })
+                .show();
     }
 
     private void reinjectDelayed(Reminder remind) {
@@ -952,6 +1021,29 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
 
         final ImageButton swapButton = (ImageButton) dialogView.findViewById(R.id.reminderSwapButton);
 
+        final CheckBox doseCheckbox = (CheckBox) dialogView.findViewById(R.id.reminderDoseCheckbox);
+        final View doseSection = dialogView.findViewById(R.id.reminderDoseSection);
+        final EditText doseUnitsEdit = (EditText) dialogView.findViewById(R.id.reminderDoseUnits);
+        final Spinner doseInsulinSpinner = (Spinner) dialogView.findViewById(R.id.reminderDoseInsulin);
+        final CheckBox doseAutoCheckbox = (CheckBox) dialogView.findViewById(R.id.reminderDoseAutoCheckbox);
+        final List<String> insulinNames = setupDoseInsulinSpinner(doseInsulinSpinner, reminder);
+
+        doseCheckbox.setChecked(reminder != null && reminder.hasDose());
+        doseSection.setVisibility(doseCheckbox.isChecked() ? View.VISIBLE : View.GONE);
+        if (reminder != null && reminder.dose_units > 0) {
+            doseUnitsEdit.setText(ReminderDoseLogger.formatUnits(reminder.dose_units));
+        }
+        doseAutoCheckbox.setChecked(reminder != null && reminder.dose_mode == Reminder.DOSE_MODE_AUTO);
+        doseCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            doseSection.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            if (isChecked && !MultipleInsulins.isEnabled()) {
+                JoH.static_toast_long(xdrip.gs(R.string.reminder_dose_needs_multiple_insulins));
+            }
+        });
+        doseAutoCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) JoH.static_toast_long(xdrip.gs(R.string.reminder_dose_auto_warning));
+        });
+
 
         if (reminder == null) {
             repeatingCheckbox.setChecked(PersistentStore.getLong("reminders-last-repeating") != 2);
@@ -1068,6 +1160,20 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
                     new_reminder.speak = speechCheckbox.isChecked();
                     new_reminder.graphicon = graphIconCheckbox.isChecked();
 
+                    if (doseCheckbox.isChecked() && !insulinNames.isEmpty()) {
+                        final double units = JoH.tolerantParseDouble(doseUnitsEdit.getText().toString(), -1);
+                        if (units > 0 && units <= ReminderDoseLogger.MAX_UNITS) {
+                            new_reminder.dose_units = units;
+                            new_reminder.dose_insulin = insulinNames.get(Math.max(0, doseInsulinSpinner.getSelectedItemPosition()));
+                            new_reminder.dose_mode = doseAutoCheckbox.isChecked() ? Reminder.DOSE_MODE_AUTO : Reminder.DOSE_MODE_CONFIRM;
+                        } else {
+                            new_reminder.dose_units = 0;
+                            JoH.static_toast_long(xdrip.gs(R.string.reminder_dose_invalid_units));
+                        }
+                    } else {
+                        new_reminder.dose_units = 0;
+                    }
+
 
                     if ((new_reminder.priority > MEGA_PRIORITY) && (!megapriorityCheckbox.isChecked())) {
                         new_reminder.priority -= MEGA_PRIORITY;
@@ -1119,6 +1225,39 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).setVisibility(View.INVISIBLE);
         }
 
+    }
+
+    // fills the spinner with insulin profiles, returns their names in spinner order
+    private List<String> setupDoseInsulinSpinner(final Spinner spinner, final Reminder reminder) {
+        final List<String> names = new ArrayList<>();
+        final List<String> labels = new ArrayList<>();
+        int selected = -1;
+        int firstLongActing = -1;
+        final List<Insulin> profiles = InsulinManager.getAllProfiles();
+        if (profiles != null) {
+            final Insulin basal = InsulinManager.getBasalProfile();
+            for (final Insulin insulin : profiles) {
+                final String name = insulin.getName();
+                if (reminder != null && name.equalsIgnoreCase(reminder.dose_insulin)) {
+                    selected = names.size();
+                } else if (selected < 0 && (reminder == null || !reminder.hasDose())
+                        && basal != null && name.equals(basal.getName())) {
+                    selected = names.size();
+                }
+                if (firstLongActing < 0 && insulin.getMaxEffect() > 1000) {
+                    firstLongActing = names.size(); // same rule as InsulinInjection.isBasal()
+                }
+                names.add(name);
+                labels.add(insulin.getDisplayName());
+            }
+        }
+        if (selected < 0) selected = firstLongActing;
+        if (labels.isEmpty()) labels.add(xdrip.gs(R.string.reminder_dose_no_insulins));
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, labels);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        if (selected >= 0) spinner.setSelection(selected);
+        return names;
     }
 
     private long getPeriod(RadioButton rbday, RadioButton rbhour, RadioButton rbweek) {
@@ -1198,7 +1337,26 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
                     Treatments.create_note("Reminder"+": " + reminder.getTitle(), tsl());
                 }
 
-                JoH.showNotification(reminder.getTitle(), xdrip.getAppContext().getString(R.string.reminder_due) + " " + JoH.hourMinuteString(reminder.next_due), pendingIntent, NOTIFICATION_ID, NotificationChannels.OTHER_ALERTS_CHANNEL, true, true, deleteIntent, JoH.isOngoingCall() ? null : (reminder.sound_uri != null) ? Uri.parse(reminder.sound_uri) : Uri.parse(JoH.getResourceURI(R.raw.reminder_default_notification)), null);
+                String content = xdrip.getAppContext().getString(R.string.reminder_due) + " " + JoH.hourMinuteString(reminder.next_due);
+                final List<NotificationCompat.Action> actions = new ArrayList<>();
+                if (reminder.hasDose()) {
+                    final long due = reminder.next_due;
+                    if (ReminderDoseLogger.shouldAutoLog(reminder)) {
+                        final ReminderDoseLogger.Result result = ReminderDoseLogger.logDose(reminder, tsl());
+                        if (result.isSuccess()) {
+                            content = xdrip.gs(R.string.reminder_dose_auto_logged_notification, ReminderDoseLogger.describe(reminder));
+                            actions.add(doseAction(xdrip.gs(R.string.reminder_dose_undo_button), reminder, EXTRA_DOSE_UNDO, due, NOTIFICATION_ID + 4));
+                        } else {
+                            content = xdrip.gs(R.string.reminder_dose_auto_failed_notification, ReminderDoseLogger.describe(reminder), ReminderDoseLogger.message(result, reminder));
+                        }
+                    }
+                    if (ReminderDoseLogger.isDosePending(reminder)) {
+                        actions.add(doseAction(xdrip.gs(R.string.reminder_dose_taken_button, ReminderDoseLogger.describe(reminder)), reminder, EXTRA_DOSE_TAKEN, due, NOTIFICATION_ID + 2));
+                        actions.add(doseAction(xdrip.gs(R.string.reminder_dose_snooze_button), reminder, "snooze", due, NOTIFICATION_ID + 3));
+                    }
+                }
+
+                JoH.showNotification(reminder.getTitle(), content, pendingIntent, NOTIFICATION_ID, NotificationChannels.OTHER_ALERTS_CHANNEL, true, true, deleteIntent, JoH.isOngoingCall() ? null : (reminder.sound_uri != null) ? Uri.parse(reminder.sound_uri) : Uri.parse(JoH.getResourceURI(R.raw.reminder_default_notification)), null, false, actions);
 
                 //    JoH.showNotification(reminder.getTitle(), "Reminder due " + JoH.hourMinuteString(reminder.next_due), pendingIntent, NOTIFICATION_ID, true, true, deleteIntent, JoH.isOngoingCall() ? null : (reminder.sound_uri != null) ? Uri.parse(reminder.sound_uri) : Uri.parse(JoH.getResourceURI(R.raw.reminder_default_notification)));
                 UserError.Log.ueh("Reminder Alert", reminder.getTitle() + " due: " + dateTimeText(reminder.next_due) + ((reminder.snoozed_till > reminder.next_due) ? " snoozed till: " + dateTimeText(reminder.snoozed_till) : ""));
@@ -1209,6 +1367,17 @@ public class Reminders extends ActivityWithRecycler implements SensorEventListen
             }
         }, 10000);
         // intentionally don't release wakelock to ensure sound plays
+    }
+
+    private static NotificationCompat.Action doseAction(final String label, final Reminder reminder, final String extra, final long due, final int requestCode) {
+        final Intent intent = new Intent(xdrip.getAppContext(), ReminderReceiver.class)
+                .setAction(REMINDER_ACTION)
+                .putExtra("snooze_id", reminder.getId())
+                .putExtra(EXTRA_DOSE_DUE, due)
+                .putExtra(EXTRA_FROM_ACTION, "true")
+                .putExtra(extra, "true");
+        final PendingIntent pendingIntent = PendingIntent.getBroadcast(xdrip.getAppContext(), requestCode, intent, FLAG_UPDATE_CURRENT);
+        return new NotificationCompat.Action.Builder(0, label, pendingIntent).build();
     }
 
     public static void cancelAlert() {

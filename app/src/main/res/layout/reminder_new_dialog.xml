@@ -223,6 +223,53 @@
             android:layout_toEndOf="@+id/homeOnlyCheckbox"
             android:checked="false"
             android:text="@string/mega_priority" />
+
+        <CheckBox
+            android:id="@+id/reminderDoseCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/homeOnlyCheckbox"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="3dp"
+            android:checked="false"
+            android:text="@string/reminder_dose_checkbox" />
+
+        <LinearLayout
+            android:id="@+id/reminderDoseSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/reminderDoseCheckbox"
+            android:layout_marginLeft="10dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/reminderDoseUnits"
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/reminder_dose_units_hint"
+                    android:inputType="numberDecimal" />
+
+                <Spinner
+                    android:id="@+id/reminderDoseInsulin"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <CheckBox
+                android:id="@+id/reminderDoseAutoCheckbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:text="@string/reminder_dose_auto_checkbox" />
+        </LinearLayout>
     </RelativeLayout>
 
 

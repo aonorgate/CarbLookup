@@ -34,6 +34,9 @@ public class Reminder extends Model {
     public static final String REMINDERS_ADVANCED_MODE = "reminders-advanced-mode";
     public static final String REMINDERS_CANCEL_DEFAULT = "reminders-cancel-default";
     public static final String REMINDERS_GRAPH_ICONS = "reminders-graph-icons";
+    // dose_mode values: ask for confirmation (notification button / swipe) or log automatically when due
+    public static final int DOSE_MODE_CONFIRM = 0;
+    public static final int DOSE_MODE_AUTO = 1;
     private static final String[] schema = {
             "CREATE TABLE Reminder (_id INTEGER PRIMARY KEY AUTOINCREMENT)",
             "ALTER TABLE Reminder ADD COLUMN next_due INTEGER",
@@ -58,6 +61,10 @@ public class Reminder extends Model {
             "ALTER TABLE Reminder ADD COLUMN homeonly INTEGER DEFAULT 0",
             "ALTER TABLE Reminder ADD COLUMN speak INTEGER DEFAULT 0",
             "ALTER TABLE Reminder ADD COLUMN graphicon INTEGER DEFAULT 0",
+            "ALTER TABLE Reminder ADD COLUMN dose_units REAL DEFAULT 0",
+            "ALTER TABLE Reminder ADD COLUMN dose_insulin TEXT",
+            "ALTER TABLE Reminder ADD COLUMN dose_mode INTEGER DEFAULT 0",
+            "ALTER TABLE Reminder ADD COLUMN dose_logged_for INTEGER DEFAULT 0",
             "CREATE INDEX index_Reminder_next_due on Reminder(next_due)",
             "CREATE INDEX index_Reminder_enabled on Reminder(enabled)",
             "CREATE INDEX index_Reminder_weekdays on Reminder(weekdays)",
@@ -156,6 +163,37 @@ public class Reminder extends Model {
     @Column(name = "ideal_time")
     public String ideal_time;
 
+    // Optional insulin dose attached to this reminder, 0 units = plain reminder
+    @Expose
+    @Column(name = "dose_units")
+    public double dose_units;
+
+    // Insulin profile name as used by InsulinManager.getProfile(String)
+    @Expose
+    @Column(name = "dose_insulin")
+    public String dose_insulin;
+
+    @Expose
+    @Column(name = "dose_mode")
+    public int dose_mode;
+
+    // next_due value of the occurrence for which the dose was last logged, guards against double logging
+    @Expose
+    @Column(name = "dose_logged_for")
+    public long dose_logged_for;
+
+    public boolean hasDose() {
+        return dose_units > 0 && dose_insulin != null && !dose_insulin.isEmpty();
+    }
+
+    public boolean isAutoDose() {
+        return hasDose() && dose_mode == DOSE_MODE_AUTO;
+    }
+
+    public boolean isDoseLoggedForCurrentOccurrence() {
+        return hasDose() && dose_logged_for == next_due;
+    }
+
 
     public boolean isAlternate() {
         if (alternating && (alternate_title != null)) {
@@ -229,7 +267,8 @@ public class Reminder extends Model {
         if (last_fired < next_due) fired_times++;
         alerted_times++;
         last_fired = JoH.tsl();
-        if (chime_only) {
+        // an automatically logged dose needs no further nagging for this occurrence
+        if (chime_only || (isAutoDose() && isDoseLoggedForCurrentOccurrence())) {
             if (repeating) {
                 UserError.Log.d(TAG, "Rescheduling next");
                 schedule_next();
