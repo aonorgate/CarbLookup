@@ -40,7 +40,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         final long id = bundle.getLong("snooze_id");
         if (bundle.getString(Reminders.EXTRA_DOSE_TAKEN) != null) {
             UserError.Log.uel(TAG, "Reminder dose taken from notification, id: " + id);
-            if (ReminderDoseLogger.handleTaken(id).isSuccess()) {
+            if (ReminderDoseLogger.handleTaken(id, bundle.getLong(Reminders.EXTRA_DOSE_DUE)).isSuccess()) {
                 Reminders.cancelAlert();
             }
             return true;

@@ -83,15 +83,25 @@ public class ReminderDoseLogger {
      *
      * @param units amount to log, normally {@code reminder.dose_units} but may be adjusted for this occurrence only
      */
-    public static synchronized Result logDose(final Reminder reminder, final long timestamp, final double units) {
+    public static Result logDose(final Reminder reminder, final long timestamp, final double units) {
+        return logDoseForOccurrence(reminder, reminder != null ? reminder.next_due : 0, timestamp, units);
+    }
+
+    /**
+     * Log the dose for a specific occurrence (identified by its due time). A notification button
+     * may be tapped after the reminder has already moved on, e.g. a second tap or a copy of the
+     * notification on a watch; it must log the occurrence it was shown for, never the next one.
+     */
+    public static synchronized Result logDoseForOccurrence(final Reminder reminder, final long dueTime, final long timestamp, final double units) {
         final Result problem = check(reminder, units);
         if (problem != null) {
             UserError.Log.e(TAG, "Not logging dose for reminder: " + problem);
             return problem;
         }
-        final String uuid = uuidFor(reminder);
-        if (reminder.isDoseLoggedForCurrentOccurrence() || Treatments.byuuid(uuid) != null) {
-            markLogged(reminder);
+        final boolean current = dueTime == reminder.next_due;
+        final String uuid = uuidFor(reminder.getId(), dueTime);
+        if ((current && reminder.isDoseLoggedForCurrentOccurrence()) || Treatments.byuuid(uuid) != null) {
+            if (current) markLogged(reminder);
             return Result.ALREADY_LOGGED;
         }
 
@@ -103,7 +113,7 @@ public class ReminderDoseLogger {
             UserError.Log.e(TAG, "Treatment creation failed for reminder dose");
             return Result.FAILED;
         }
-        markLogged(reminder);
+        if (current) markLogged(reminder);
         UserError.Log.uel(TAG, "Logged " + formatUnits(units) + "U " + insulin.getName()
                 + " from reminder: " + reminder.getTitle());
         return Result.LOGGED;
@@ -188,12 +198,15 @@ public class ReminderDoseLogger {
         }
     }
 
-    /** Notification "Taken" button: log at the time of the tap and complete the occurrence. */
-    public static Result handleTaken(final long reminderId) {
+    /**
+     * Notification "Taken" button: log the occurrence the notification was shown for at the time
+     * of the tap, and complete that occurrence if the reminder is still on it.
+     */
+    public static Result handleTaken(final long reminderId, final long dueTime) {
         final Reminder reminder = Reminder.byid(reminderId);
         if (reminder == null) return Result.FAILED;
-        final Result result = logDose(reminder, JoH.tsl());
-        if (result.isSuccess()) {
+        final Result result = logDoseForOccurrence(reminder, dueTime, JoH.tsl(), reminder.dose_units);
+        if (result.isSuccess() && reminder.next_due == dueTime) {
             completeOccurrence(reminder);
         }
         JoH.static_toast_long(message(result, reminder));
