@@ -1616,6 +1616,10 @@ public class JoH {
     }
 
     public static void showNotification(String title, String content, PendingIntent intent, int notificationId, String channelId, boolean sound, boolean vibrate, PendingIntent deleteIntent, Uri sound_uri, String bigmsg, boolean highPriority) {
+        showNotification(title, content, intent, notificationId, channelId, sound, vibrate, deleteIntent, sound_uri, bigmsg, highPriority, null);
+    }
+
+    public static void showNotification(String title, String content, PendingIntent intent, int notificationId, String channelId, boolean sound, boolean vibrate, PendingIntent deleteIntent, Uri sound_uri, String bigmsg, boolean highPriority, List<NotificationCompat.Action> actions) {
         if (channelId == null) {
             channelId = GENERAL_CHANNEL;
         }
@@ -1646,6 +1650,12 @@ public class JoH {
 
         if (highPriority) {
             mBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
+        }
+
+        if (actions != null) {
+            for (final NotificationCompat.Action action : actions) {
+                mBuilder.addAction(action);
+            }
         }
 
         final NotificationManager mNotifyMgr = (NotificationManager) xdrip.getAppContext().getSystemService(Context.NOTIFICATION_SERVICE);
