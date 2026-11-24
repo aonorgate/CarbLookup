@@ -38,6 +38,9 @@ reason is shown and the reminder stays due.
 
 * Each occurrence is logged at most once. The treatment uuid is derived from the reminder id and
   its due time, so the notification button, the swipe and automatic mode cannot double log.
+* The notification buttons carry the due time they were shown for. Tapping **Taken** on a stale
+  notification (a second tap, or a copy on a watch) logs that occurrence at most once and never
+  logs the next day's dose early.
 * Doses must be above 0 and at most 100 units.
 * Automatic mode logs a dose that may not have been taken. Confirm mode is the default and the
   safer choice.
@@ -55,7 +58,8 @@ reason is shown and the reminder stays due.
 `dose_logged_for` holds the `next_due` of the occurrence that was logged. After an undo it holds
 `-next_due`, which marks automatic logging as suppressed for that occurrence.
 
-Tests: `ReminderDoseLoggerTest`
+Tests: `ReminderDoseLoggerTest` (logic) and `ReminderDoseNotificationTest` (posts the real
+notification and taps its buttons through `ReminderReceiver`)
 
 ```bash
 ./gradlew :app:testFastDebugUnitTest --tests 'com.eveningoutpost.dexdrip.insulin.reminder.*'

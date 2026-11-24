@@ -146,7 +146,7 @@ public class ReminderDoseLoggerTest extends RobolectricTestWithConfig {
         final Reminder reminder = dueDoseReminder(14, Reminder.DOSE_MODE_CONFIRM);
         final long due = reminder.next_due;
 
-        assertThat(ReminderDoseLogger.handleTaken(reminder.getId())).isEqualTo(Result.LOGGED);
+        assertThat(ReminderDoseLogger.handleTaken(reminder.getId(), reminder.next_due)).isEqualTo(Result.LOGGED);
 
         final Reminder after = Reminder.byid(reminder.getId());
         assertThat(after.next_due).isGreaterThan(JoH.tsl());
@@ -157,12 +157,30 @@ public class ReminderDoseLoggerTest extends RobolectricTestWithConfig {
     }
 
     @Test
+    public void handleTaken_staleOccurrence_logsThatOccurrenceOnly() {
+        final Reminder reminder = dueDoseReminder(14, Reminder.DOSE_MODE_CONFIRM);
+        final long due = reminder.next_due;
+        // swiped "Done only" in the app, so the reminder moved on without logging
+        reminder.schedule_next();
+
+        // then Taken is tapped on the notification that was still showing
+        assertThat(ReminderDoseLogger.handleTaken(reminder.getId(), due)).isEqualTo(Result.LOGGED);
+        assertThat(ReminderDoseLogger.handleTaken(reminder.getId(), due)).isEqualTo(Result.ALREADY_LOGGED);
+
+        assertThat(allTreatments()).hasSize(1);
+        assertThat(Treatments.byuuid(ReminderDoseLogger.uuidFor(reminder.getId(), due))).isNotNull();
+        final Reminder after = Reminder.byid(reminder.getId());
+        assertThat(after.next_due).isEqualTo(reminder.next_due); // not moved on a second time
+        assertThat(ReminderDoseLogger.isDosePending(after)).isTrue(); // tomorrow's dose is untouched
+    }
+
+    @Test
     public void handleTaken_oneOff_disablesReminder() {
         final Reminder reminder = dueDoseReminder(14, Reminder.DOSE_MODE_CONFIRM);
         reminder.repeating = false;
         reminder.save();
 
-        assertThat(ReminderDoseLogger.handleTaken(reminder.getId())).isEqualTo(Result.LOGGED);
+        assertThat(ReminderDoseLogger.handleTaken(reminder.getId(), reminder.next_due)).isEqualTo(Result.LOGGED);
 
         assertThat(Reminder.byid(reminder.getId()).enabled).isFalse();
     }
@@ -173,7 +191,7 @@ public class ReminderDoseLoggerTest extends RobolectricTestWithConfig {
         final Reminder reminder = dueDoseReminder(14, Reminder.DOSE_MODE_CONFIRM);
         final long due = reminder.next_due;
 
-        assertThat(ReminderDoseLogger.handleTaken(reminder.getId())).isEqualTo(Result.MULTIPLE_INSULINS_DISABLED);
+        assertThat(ReminderDoseLogger.handleTaken(reminder.getId(), reminder.next_due)).isEqualTo(Result.MULTIPLE_INSULINS_DISABLED);
 
         assertThat(Reminder.byid(reminder.getId()).next_due).isEqualTo(due);
     }
