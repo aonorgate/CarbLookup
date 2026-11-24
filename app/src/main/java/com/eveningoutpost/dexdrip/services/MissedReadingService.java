@@ -6,7 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.AlertType;
@@ -38,6 +38,7 @@ import com.eveningoutpost.dexdrip.webservices.XdripWebService;
 import com.eveningoutpost.dexdrip.xdrip;
 
 import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
+import static com.eveningoutpost.dexdrip.utilitymodels.Constants.MINUTE_IN_MS;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getLocalServiceCollectingState;
 
 public class MissedReadingService extends IntentService {
@@ -181,7 +182,12 @@ public class MissedReadingService extends IntentService {
     }
 
     private void checkBackAfterMissedTime(long alarmIn) {
-        setAlarm(alarmIn, false);
+        // The following conditional log represents the impact of changing the "force" parameter from false to true
+        // in the setAlarm call below.
+        if (alarmIn < 5 * MINUTE_IN_MS) {
+            UserError.Log.d(TAG, "Set timer for: " + (alarmIn / MINUTE_IN_MS) + " min instead of 5 minutes");
+        }
+        setAlarm(alarmIn, true);
     }
 
     // alarmIn is relative time ms

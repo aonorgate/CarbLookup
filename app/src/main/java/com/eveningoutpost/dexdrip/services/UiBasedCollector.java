@@ -106,8 +106,10 @@ public class UiBasedCollector extends NotificationListenerService {
         coOptedPackages.add("com.microtech.aidexx.equil.mmoll");
         coOptedPackages.add("com.microtech.aidexx.diaexport.mmoll"); //for microtech germany version, typo is intentional!
         coOptedPackages.add("com.microtech.aidexx.smart.mmoll"); //for microtech Brazil version
+        coOptedPackages.add("com.microtech.aidexx.grx1.mmoll");
         coOptedPackages.add("com.ottai.seas");
         coOptedPackages.add("com.microtech.aidexx"); //for microtech china version
+        coOptedPackages.add("com.sisensing.eco"); //for SiSensing Eco China version
         coOptedPackages.add("com.ottai.tag"); // //for ottai china version
         coOptedPackages.add("com.senseonics.eversense365.us");
         coOptedPackages.add("com.kakaohealthcare.pasta"); // A Health app for sensors that we already collect from
@@ -116,6 +118,7 @@ public class UiBasedCollector extends NotificationListenerService {
         coOptedPackages.add("com.sinocare.ican.health.ru");
         coOptedPackages.add("com.suswel.ai");
         coOptedPackages.add("com.glucotech.app.android");
+        coOptedPackages.add("com.diabeloop.dblg2");
 
         coOptedPackagesAll.add("com.dexcom.dexcomone");
         coOptedPackagesAll.add("com.dexcom.d1plus");
@@ -129,8 +132,10 @@ public class UiBasedCollector extends NotificationListenerService {
         coOptedPackagesAll.add("com.microtech.aidexx.equil.mmoll");
         coOptedPackagesAll.add("com.microtech.aidexx.diaexport.mmoll");
         coOptedPackagesAll.add("com.microtech.aidexx.smart.mmoll"); //for microtech Brazil version
+        coOptedPackagesAll.add("com.microtech.aidexx.grx1.mmoll");
         coOptedPackagesAll.add("com.ottai.seas");
         coOptedPackagesAll.add("com.microtech.aidexx"); //for microtech china version
+        coOptedPackagesAll.add("com.sisensing.eco"); //for SiSensing Eco China version
         coOptedPackagesAll.add("com.ottai.tag"); // //for ottai china version
         coOptedPackagesAll.add("com.senseonics.eversense365.us");
         coOptedPackagesAll.add("com.kakaohealthcare.pasta"); // Experiment
@@ -139,6 +144,7 @@ public class UiBasedCollector extends NotificationListenerService {
         coOptedPackagesAll.add("com.sinocare.ican.health.ru");
         coOptedPackagesAll.add("com.suswel.ai");
         coOptedPackagesAll.add("com.glucotech.app.android");
+        coOptedPackagesAll.add("com.diabeloop.dblg2");
 
         companionAppIoBPackages.add("com.insulet.myblue.pdm");
         companionAppIoBPackages.add("com.medtronic.diabetes.minimedmobile.eu");
@@ -146,10 +152,17 @@ public class UiBasedCollector extends NotificationListenerService {
         // The IoB value should be captured into the first match group.
         // English localization of the Omnipod 5 App
         companionAppIoBRegexes.add(Pattern.compile("IOB: ([\\d\\.,]+) U"));
-        // MiniMed Mobile (EU): "Active Insulin" label and "1.234 U" value in separate TextViews
-        companionAppIoBRegexes.add(Pattern.compile("^([\\d\\.]+) U$"));
-        // MiniMed Mobile (EU): "Aktives Insulin" label and "1,234 IE" value in separate TextViews
-        companionAppIoBRegexes.add(Pattern.compile("^([\\d\\,]+) IE$"));
+
+        // MiniMed Mobile (EU): All locales handled
+        // ("Active Insulin" label and "1.234 U" are separate TextViews)
+        val numberPattern = "\\p{Nd}+[.,\u066B]\\p{Nd}+";  // Any unicode digits separated by dot, comma, or Arabic "٫"
+        val suffixPattern = String.join("|",
+            " U", " IE", " J", " E", " e", " j", " Ü", " единици",  // Space before unit (most locales)
+            "U",                                                    // No space before unit (ko, zh)
+            " j\\.", " Ед\\.", " Од\\.",                            // Dot after unit (sk, ru, uk)
+            " \u05D9\u05D7'",                                       // Hebrew: יח'
+            " \u0648");                                             // Arabic: و
+        companionAppIoBRegexes.add(Pattern.compile("^(" + numberPattern + ")(" + suffixPattern + ")$"));
     }
 
     @Override
@@ -298,6 +311,7 @@ public class UiBasedCollector extends NotificationListenerService {
                 .replace("\u00a0", " ")
                 .replace("\u2060", "")
                 .replace("\\", "/")
+                .replace("当前血糖:", "")
                 .replace("mmol/L", "")
                 .replace("mmol/l", "")
                 .replace("mg/dL", "")
@@ -507,7 +521,7 @@ public class UiBasedCollector extends NotificationListenerService {
     private static void enableNotificationService(final Activity activity) {
         if (!isNotificationServiceEnabled()) {
             JoH.show_ok_dialog(activity, gs(R.string.please_allow_permission),
-                    "Permission is needed to receive data from other applications. xDrip does not do anything beyond this scope. Please enable xDrip on the next screen",
+                    gs(R.string.notification_listener_permission_explanation),
                     () -> activity.startActivity(new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS)));
         }
     }

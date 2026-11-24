@@ -121,7 +121,6 @@
     <string name="title_activity_display_qrcode">Поделиться настройками через QR-код</string>
     <string name="title_activity_send_feed_back">Отправить отзыв Jamorham-у</string>
     <string name="title_activity_save_logs">Сохранить логи</string>
-    <string name="title_activity_maps">Карта Parakeet</string>
     <string name="title_activity_display_preferences">Настройки отображения</string>
     <string name="export_submenu">Импорт / Экспорт данных</string>
     <string name="action_resend_to_watch">Повторно отправить значения глюкозы на часы</string>
@@ -158,9 +157,6 @@
     <string name="till">до</string>
     <string name="low_predicted">Прогнозируется гипогликемия</string>
     <string name="in">через</string>
-    <string name="yes_enter_setup_mode">Да, войти в режим настройки</string>
-    <string name="nokeep_parakeet_as_it_is">Не держите Parakeet, как есть</string>
-    <string name="are_you_sure_you_want_switch_parakeet_to_setup">Вы уверены, что хотите переключить Parakeet в режим настройки?\n\nОбычно это используется только для отправки дополнительных текстовых сообщений на Parakeet для перенастройки трансмиттера, который он прослушивает, и т.д.</string>
     <string name="split_delete_or_do_nothing">Разделить, удалить или ничего не делать</string>
     <string name="split_this_block_in_two">Разделить блок на 2 части</string>
     <string name="delete_this_time_block">Удалить данный временной блок</string>
@@ -175,8 +171,6 @@
     <string name="in_libre_all_house_mode_no_readings_collected_yet">"В режиме Libre по всему дому: нет полученных значений."</string>
     <string name="in_libre_all_house_mode_last_data_collected">"В режиме Libre по всему дому: Последние значения "</string>
     <string name="space_minute_ago">" мин. назад"</string>
-    <string name="show_parakeet_map">Показать карту Parakeet</string>
-    <string name="switch_parakeet_to_setup_mode">Переключить Parakeet в режим настройки</string>
     <string name="view_events_log">Просмотр журнала событий</string>
     <string name="show_libre_trend">Отображать тренд Libre</string>
     <string name="libre_15_minutes_graph">15-минутный график Libre</string>
@@ -235,7 +229,7 @@
     <string name="extrapolate_data_to_try_to_predict_lows">Экстраполировать данные, чтобы попытаться предсказать низкий</string>
     <string name="alarm_at_forecasted_low_mins">Тревога при предсказанном низком за x минут</string>
     <string name="title_forecast_low_threshold">Порог</string>
-    <string name="other_xdrip_plus_alerts">Другие оповещения xDrip+</string>
+    <string name="other_xdrip_plus_alerts">Другие тревоги xDrip+</string>
     <string name="xdrip_plus_display_settings">Настройки отображения xDrip+</string>
     <string name="display_customisations">Настройки отображения</string>
     <string name="insulin_carb_ratios_etc_for_models">Настройки инсулина, углеводов и т.д. для моделей</string>
@@ -399,8 +393,6 @@
     <string name="web_feedback_form_for_sending_messages">Веб-форма обратной связи для отправки сообщений и оценок xDrip+ разработчикам</string>
     <string name="be_master_for_followers">Мастер-режим для фолловеров</string>
     <string name="this_device_will_send_data_to_followers">Данное устройство будет отправлять данные фолловерам</string>
-    <string name="send_parakeet_map_location_to_followers">Делиться местоположением Parakeet с фолловерами</string>
-    <string name="sync_parakeet_geolocation">Синхронизировать данные геолокации Parakeet</string>
     <string name="disable_all_sync_features">Полностью отключить синхронизацию</string>
     <string name="temporary_work_around_disable_all_sync_detail">Временная заплатка полностью останавливающая синхронизацию. После повторного включения может потребоваться перезагрузка. Используйте с осторожностью!</string>
     <string name="automatic_updates_crash_reports_and_feedback">Автоматическое обновление, отчеты о сбоях и обратная связь с разработчиком</string>
@@ -421,7 +413,7 @@
     <string name="sdcard_not_writable_cannot_save">SDcard недоступна для записи - невозможно сохранить</string>
     <string name="sdcard_not_readable">SDCard недоступна для чтения</string>
     <string name="loading_settings_from_xdrip_mainline">Загрузка настроек из основной ветки xDrip</string>
-    <string name="warning_settings_from_xdrip_and_plus_exist">Настройки предупреждений xDrip и xDrip+ уже существуют − загрузка xDrip+</string>
+    <string name="warning_settings_from_xdrip_and_plus_exist">Есть настройки предупреждений из xDrip и xDrip+ - загрузка xDrip+</string>
     <string name="new_version_date_colon">"Дата новой версии: "</string>
     <string name="old_version_date_colon">"Дата старой версии: "</string>
     <string name="speak_your_note_text">Произнесите вслух текст заметки</string>
@@ -434,9 +426,6 @@
     <string name="notify_when_predicted_low_time_reaches_threshold">Уведомлять, когда время до предсказанного низкого достигает порога</string>
     <string name="predicted_low_sound">Звук предсказанного низкого</string>
     <string name="choose_sound_used_for_predicted_low_alarm">Выберите звук для тревоги о предсказанном низком.</string>
-    <string name="notify_when_parakeet_device_stops_checking_in">Уведомлять, когда связь с устройством Parakeet потеряна</string>
-    <string name="parakeet_related_alerts">Оповещения Parakeet</string>
-    <string name="raise_parakeet_notification_silently_when_charging">Включать уведомление Parakeet без звука при зарядке</string>
     <string name="silent_alert_when_charging">Беззвучные оповещения во время зарядки</string>
     <string name="alerts_start_out_snoozed_and_must_persist_for_a_while">Показ оповещения с задержкой по времени, определяемой пользователем</string>
     <string name="alarms_silenced_during_telephone_calls">Беззвучные уведомления во время разговора</string>
@@ -518,7 +507,6 @@
     <string name="show_graph_total_average">Отображать общую среднюю на графике</string>
     <string name="show_momentum_working_curve">Отображать кривую инерции глюкозы</string>
     <string name="show_noise_workings">Отображать работу шумоподавления</string>
-    <string name="parakeet_and_extra_features">Parakeet и дополнительные тестовые функции</string>
     <string name="insulin_duration_hours">Длительность действия инсулина (в часах)</string>
     <string name="default_liver_sensitivity_ratio">Коэффициент чувствительности печени по-умолчанию</string>
     <string name="key_is_used_instead_of_google_account">Использовать заданный ключ вместо учетной записи Google</string>
@@ -552,7 +540,6 @@
     <string name="battery">Батарея</string>
     <string name="xbridge_battery">Батарея xBridge</string>
     <string name="limitter_battery">Батарея Libre</string>
-    <string name="parakeet_battery">Батарея Parakeet</string>
     <string name="after_calibration_rewrite_history">После калибровки изменить предшествующие данные на графике, чтобы сгладить его под новое калибровочное значение</string>
     <string name="rewrite_history">Скорректировать исторические данные</string>
     <string name="grid_time_lines_visible">Сделать видимыми линии временной шкалы на графике</string>
@@ -703,11 +690,11 @@
     <string name="show_expiry_time">Показывать время истечения срока датчика основываясь на 14,5 днях</string>
     <string name="show_sensor_age">Показывать возраст датчика на главном экране</string>
     <string name="change_sensor_total_days">Количество дней до замены датчика</string>
-    <string name="nfc_scanning_xdrip_open">Сканировать только когда приложение xDrip+ на экране</string>
+    <string name="nfc_scanning_xdrip_open">Сканирование NFC будет работать, только когда приложение xDrip+ открыто</string>
     <string name="nfc_scanning_launcher">Сканирование NFC будет также работать на экране запуска приложений</string>
-    <string name="scan_when_app_closed">Сканировать когда xDrip+ закрыт</string>
+    <string name="scan_when_app_closed">Сканировать, когда не в xDrip+</string>
     <string name="vibrate_scanning_status">Вибрировать при сканировании</string>
-    <string name="beep_when_scanning_within_app">Звуковое уведомление при сканировании приложением xDrip+</string>
+    <string name="beep_when_scanning_within_app">Сигнал при сканировании в приложении xDrip+</string>
     <string name="use_multi_block">Использовать более быстрый мультиблочный метод чтения</string>
     <string name="use_any_tag">Использовать метод оптимизации чтения с помощью any-tag</string>
     <string name="low_level_value">Низкоуровневое диагностическое/опытное значение</string>
@@ -816,7 +803,7 @@
     <string name="force_english_text">Меню на английском</string>
     <string name="using_local_language">В настоящий момент используется системный язык</string>
     <string name="forcing_alternate_language">В настоящий момент язык приложения принудительно изменен на английский</string>
-    <string name="need_alternate_language">Позволяет изменить язык приложения xDrip+ на выбранный</string>
+    <string name="need_alternate_language">Если вам нужен перевод на другой язык в xDrip+</string>
     <string name="chosse_language">Выбрать язык меню</string>
     <string name="widget_range_lines">Линии диапазона виджета</string>
     <string name="show_range_on_widget">Показывать линии верхнего и нижнего порога на виджете.</string>
@@ -825,7 +812,6 @@
     <string name="display_calculations">Отображать расчетные дозы инсулина/углеводов</string>
     <string name="display_calculations_everytime">Всегда отображать расчетные дозы инсулина/углеводов</string>
     <string name="always_show_bolus_wizard_preview">Всегда отображать \'Bolus Wizard Preview\'</string>
-    <string name="show_test_features">Показывать дополнительные и альфа функции</string>
     <string name="show_reminder_features">Показывать меню напоминаний и функции</string>
     <string name="enable_reminder_features">Включить функцию напоминания</string>
     <string name="display_mathamatical_simulations">Отображать прогнозируемые значения (смоделированные математическим путем), основанные на данных профиля и исторических данных об употребленных углеводах/введенных дозах инсулина</string>
@@ -937,7 +923,7 @@
     <string name="eng_mode_is_on">Инженерный режим включен. Пожалуйста, выключите его, если вы не уверены, что он нужен, так как он может вызывать неожиданное поведение.</string>
     <string name="yes">Да</string>
     <string name="enable">Включить</string>
-    <string name="xdrip_compatible_features">Функции %s xDrip+</string>
+    <string name="xdrip_compatible_features">xDrip+ %s функции</string>
     <string name="garmin">Garmin</string>
     <string name="fitbit">Fitbit</string>
     <string name="enable_local_web_server_feature">Включить функцию локального веб-сервера для Garmin?</string>
@@ -946,7 +932,6 @@
     <string name="are_you_sure">Вы уверены?</string>
     <string name="g4_share_receiver">G4 Share приемник</string>
     <string name="bluetooth_wixel">Bluetooth Wixel</string>
-    <string name="parakeet_wifi">Parakeet / Wi-Fi</string>
     <string name="other">Другая</string>
     <string name="which_software_is_the_wixel_running">Версия программного обеспечения Wixel?</string>
     <string name="start_source_setup_wizard">Запустить мастер настройки источника данных</string>
@@ -962,7 +947,6 @@
     <string name="use_librealarm">Использовать LibreAlarm как источник данных?</string>
     <string name="noise_blocking">Шумоподавление</string>
     <string name="level_at_which_noisy_data_should_not_be_broadcast">Порог шумных данных при котором значения будут отфильтрованы при передаче так как могут нарушить работу принимающего приложения</string>
-    <string name="low_parakeet_battery">Низкий уровень заряда Parakeet</string>
     <string name="glucose_units_mmol_or_mgdl">Единицы измерения - ммоль/л или мг/дл</string>
     <string name="is_your_typical_glucose_value">Типичный уровень глюкозы для вас: 5,5 (ммоль/л) или 100(мг/дл)? Пожалуйста, выберите ниже</string>
     <string name="settings_updated_to_mmol">Настройки изменены на ммоль/л</string>
@@ -976,13 +960,13 @@
     <string name="enable_update_checks">Включить проверку обновлений?</string>
     <string name="you_can_easily_roll_back_dialog_msg">С xDrip вы можете с легкостью \'откатиться\' на предыдущую версию приложения, для этого просто перезапустите установщик APK более старой версии приложения, если вам не нравится новая.\n\nХотите включить проверку обновлений?</string>
     <string name="hey_fam">Доступно обновление</string>
-    <string name="you_have_update_checks_off">Проверка обновлений отключена!\n\nРазработчики постоянно работают над исправлениями и новыми функциями xDrip+.\n\nНапоминание об активации обновлений будет появляться каждые 60 дней.</string>
+    <string name="you_have_update_checks_off">У вас выключены проверки обновлений!\n\nМы стараемся исправлять ошибки и добавлять новые функции в xDrip+ со временем.\n\nКаждые 60 дней это напоминание будет появляться, чтобы спросить вас о включении проверки обновлений.</string>
     <string name="update_checking_enabled">Проверка обновлений активирована!</string>
     <string name="cancel_alarm">Отменить уведомление?</string>
     <string name="please_confirm_to_cancel_the_alert">Пожалуйста подтвердите отмену уведомления?</string>
     <string name="yes_cancel">Да, отменить</string>
     <string name="warning_no_alert_will_be_played_in_silent_mode">Внимание, уведомления не будут отображаться в беззвучном режиме/режиме вибрации!!!</string>
-    <string name="automatic_message_from_xdrip">Сообщение отправлено автоматически из xDrip+</string>
+    <string name="automatic_message_from_xdrip">автоматическое сообщение из xDrip+</string>
     <string name="zero_zero_zero_zero">0000</string>
     <string name="emergency_messages">Экстренные сообщения</string>
     <string name="emergency_message_feature">Активания экстренных сообщений</string>
@@ -1180,7 +1164,7 @@
     <string name="need_permission_to_access_audio_files">Требуется разрешение для доступа к аудио файлам</string>
     <string name="need_contacts_permission_to_select_message_recipients">Требуется доступ к контактам для выбора получателей сообщения</string>
     <string name="need_storage_permission_to_access_all_ringtones">Требуется доступ к памяти устройства для доступа ко всем рингтонам</string>
-    <string name="xdrip_needs_whitelisting_for_proper_performance">xDrip+ необходимы дополнительные разрешения для корректной работы</string>
+    <string name="xdrip_needs_whitelisting_for_proper_performance">xDrip+ должен быть в исключениях для правильной работы</string>
     <string name="overwrite_slope_engineering_only">Заменить угловой коэффициент (инженерная функция!)</string>
     <string name="overwrite_intercept_engineering_only">Заменить точку пересечения (инженерная функция!)</string>
     <string name="manual_overwrite_not_possible">Ручное изменение не возможно!</string>
@@ -1223,6 +1207,11 @@
     <string name="summary_tidepool_upload_no_treatment">Отправлять только данные ГК, чтобы избежать дубликатов с ручной выгрузкой с помпы</string>
     <string name="title_tidepool_upload_no_treatment">Не отправлять терапию</string>
     <string name="title_tidepool">Tidepool</string>
+    <!-- Nocturne connect flow -->
+    <string name="title_nocturne_upload_treatments">Загружать пользовательские значения</string>
+    <string name="title_nocturne_use_mobile">Использовать мобильные данные</string>
+    <!-- NocturneConnectActivity (deep link receiver) -->
+    <!-- NocturneConnectHelper (device flow UI) -->
     <string name="show_help">Показать справку</string>
     <string name="load_save_settings_on_sdcard">Загрузить/сохранить настройки на SDcard</string>
     <string name="delete_all_bg_readings">Удалить все данные глюкозы</string>
@@ -1585,7 +1574,7 @@
     <string name="running_test_with_number_123">Тест запущен с номером: 123</string>
     <string name="unusual_internal_context_problem__please_report">Необычная внутренняя проблема контекста - пожалуйста, сообщите</string>
     <string name="cannot_start__please_report_context_problem">Невозможно запустить - пожалуйста, сообщите о проблеме контекста</string>
-    <string name="xdrip_will_not_work_below_android_version_42">xDrip+ не совместим с версиями Android ниже 4.2</string>
+    <string name="xdrip_will_not_work_below_android_version_42">xDrip+ не будет работать на Android ниже 4.2</string>
     <string name="xdrip_oop2_not_installed">xDrip+ необходим OOP2 для работы с US Libre2/Libre сенсором.</string>
     <string name="this_app_needs_battery_optimization_whitelisting_or_it_will_not_work_well_please_reset_app_preferences">Для корректной работы приложение необходимо исключить из списка оптимизации энергопотребления. Пожалуйста выполните необходимые настройки</string>
     <string name="setting_disabled_">Настройка отключена :)</string>
@@ -1897,4 +1886,7 @@
     <string name="glupro_disconnected">Отключено</string>
     <string name="glupro_connected">Подключено</string>
     <string name="glupro_start_time">Включить</string>
+    <string name="notification_listener_permission_explanation">Чтобы xDrip+ мог получать показания глюкозы из других приложений, ему необходим доступ к уведомлениям. Приложение не использует его для других целей.
+
+Разрешите этот доступ на следующем экране</string>
 </resources>

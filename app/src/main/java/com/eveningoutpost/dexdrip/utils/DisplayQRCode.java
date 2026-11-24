@@ -19,7 +19,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -297,9 +297,7 @@ public class DisplayQRCode extends BaseAppCompatActivity {
 
     private void showQRCode() {
         String mystring = new JSONObject(prefsMap).toString();
-        Log.d(TAG, "Serialized: " + mystring);
         String compressedstring = JoH.compressString(mystring);
-        Log.d(TAG, "Compressed: " + compressedstring);
 
         if (compressedstring != null) {
             // show non binary type - unwrap the base64 because it gets wrapped again

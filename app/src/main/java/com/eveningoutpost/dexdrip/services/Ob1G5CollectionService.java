@@ -77,7 +77,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.ParcelUuid;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
 
@@ -365,9 +365,10 @@ public class Ob1G5CollectionService extends G5BaseService {
                         break;
                     case CONNECT_NOW:
                         if (specialPairingWorkaround()) {
+                            tryLoadingSavedMAC(); // transmitterMAC is cleared on every service start and an unknown MAC would read as not bonded
                             val locallyBonded = isDeviceLocallyBonded();
                             UserError.Log.d(TAG, "wasbonded = " + wasBonded + " local: " + locallyBonded);
-                            if (wasBonded.equals(getTransmitterID()) && !locallyBonded && skippedConnects < 10) {
+                            if (wasBonded.equals(getTransmitterID()) && transmitterMAC != null && !locallyBonded && skippedConnects < 10) {
                                 skippedConnects++;
                                 UserError.Log.wtf(TAG, "Appears to have lost bonding, skipping this connect! @ " + skippedConnects);
                                 changeState(CLOSE);
@@ -1233,6 +1234,8 @@ public class Ob1G5CollectionService extends G5BaseService {
 
             minimize_scanning = Pref.getBooleanDefaultFalse("ob1_minimize_scanning");
             // allow_scan_by_mac = Build.VERSION.SDK_INT >= 32 && shortTxId();
+
+            transmitterMAC = null; // clear on every service start
             automata(); // sequence logic
 
             UserError.Log.d(TAG, "Releasing service start");
@@ -1312,7 +1315,8 @@ public class Ob1G5CollectionService extends G5BaseService {
         if (search_name == null && (this_address.equalsIgnoreCase(historical_address) || this_name == null ||
                 (emptyString(historical_address) && this_name.startsWith("DXCM")) ||
                 (emptyString(historical_address) && this_name.startsWith("DX02")) ||
-                (emptyString(historical_address) && this_name.startsWith("DX01")))) {
+                (emptyString(historical_address) && this_name.startsWith("DX01")) ||
+                (emptyString(historical_address) && this_name.startsWith("DX04")))) {
             return !inFailureTally(this_address) && pairKeeper.check(getTransmitterID(), this_address);
         }
 
@@ -1998,6 +2002,15 @@ public class Ob1G5CollectionService extends G5BaseService {
 
 
         if (!is_started && was_started) {
+            // A SessionStartTxMessage queued at the moment a stopped-state calibration
+            // is processed means xDrip has already moved on to a new sensor session
+            // locally - whether the Start was queued behind a still-pending Stop, or in
+            // the gap between the connection that delivered the Stop and the one now
+            // reading the transmitter's resulting Stopped state. Either way, the stop
+            // ack we are now processing applies to the prior session, so do not clear
+            // the newly-created Sensor row or emit duplicate stop notifications or
+            // treatments.
+            final boolean staleStopAck = pendingStart();
             if (Sensor.isActive()) {
                 if (Pref.getBooleanDefaultFalse("ob1_g5_restart_sensor")) {
                     if (state.ended()) {
@@ -2010,15 +2023,21 @@ public class Ob1G5CollectionService extends G5BaseService {
                     final PendingIntent pi = PendingIntent.getActivity(xdrip.getAppContext(), G5_SENSOR_RESTARTED, JoH.getStartActivityIntent(Home.class), PendingIntent.FLAG_UPDATE_CURRENT);
                     JoH.showNotification("Auto Start", "Sensor Requesting Restart", pi, G5_SENSOR_RESTARTED, true, true, false);
                     UserError.Log.uel(TAG, "Sensor Requesting Restart");
+                } else if (staleStopAck) {
+                    UserError.Log.uel(TAG, "Ignoring stale stop ack: a Start is already queued for the next sensor session");
                 } else {
                     UserError.Log.uel(TAG, "Marking sensor session as stopped");
                     Sensor.stopSensor();
                 }
             }
-            final PendingIntent pi = PendingIntent.getActivity(xdrip.getAppContext(), G5_SENSOR_STARTED, JoH.getStartActivityIntent(Home.class), PendingIntent.FLAG_UPDATE_CURRENT);
-            JoH.showNotification(state.getText(), "Sensor Stopped", pi, G5_SENSOR_STARTED, true, true, false);
-            UserError.Log.ueh(TAG, "Native Sensor is now Stopped: " + state.getExtendedText());
-            Treatments.sensorStop(null, "Stopped by transmitter: " + state.getExtendedText());
+            if (!staleStopAck) {
+                final PendingIntent pi = PendingIntent.getActivity(xdrip.getAppContext(), G5_SENSOR_STARTED, JoH.getStartActivityIntent(Home.class), PendingIntent.FLAG_UPDATE_CURRENT);
+                JoH.showNotification(state.getText(), "Sensor Stopped", pi, G5_SENSOR_STARTED, true, true, false);
+                UserError.Log.ueh(TAG, "Native Sensor is now Stopped: " + state.getExtendedText());
+                Treatments.sensorStop(null, "Stopped by transmitter: " + state.getExtendedText());
+            } else {
+                UserError.Log.ueh(TAG, "Suppressing duplicate stop notification: transmitter stop ack belongs to a session already replaced in xDrip");
+            }
         } else if (is_started && !was_started) {
             JoH.cancelNotification(G5_SENSOR_STARTED);
             UserError.Log.ueh(TAG, "Native Sensor is now Started: " + state.getExtendedText());
@@ -2537,7 +2556,7 @@ public class Ob1G5CollectionService extends G5BaseService {
         }
         val tsl = tsl();
         failureTally.put(localMac, tsl);
-        UserError.Log.d(TAG, "Adding " + localMac + " to failure tally " + JoH.dateTimeText(tsl));
+        UserError.Log.d(TAG, "Adding " + localMac + " to failure tally " + JoH.dateTimeText(tsl) + " total:" + failureTally.size());
         resetSomeInternalState();
     }
 

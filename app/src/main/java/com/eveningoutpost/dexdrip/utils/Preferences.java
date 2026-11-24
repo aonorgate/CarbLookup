@@ -61,7 +61,6 @@ import com.eveningoutpost.dexdrip.BasePreferenceActivity;
 import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.NFCReaderX;
-import com.eveningoutpost.dexdrip.ParakeetHelper;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.WidgetUpdateService;
 import com.eveningoutpost.dexdrip.alert.Registry;
@@ -69,6 +68,7 @@ import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.CareLinkFollowService;
 import com.eveningoutpost.dexdrip.cgm.carelinkfollow.auth.CareLinkAuthType;
 import com.eveningoutpost.dexdrip.cgm.dex.TxIdHelper;
+import com.eveningoutpost.dexdrip.cgm.li3.Li3Nfc;
 import com.eveningoutpost.dexdrip.cgm.nsfollow.NightscoutFollow;
 import com.eveningoutpost.dexdrip.cgm.sharefollow.ShareFollowService;
 import com.eveningoutpost.dexdrip.cgm.webfollow.Cpref;
@@ -81,6 +81,7 @@ import com.eveningoutpost.dexdrip.cloud.nightlite.NightLiteQR;
 import com.eveningoutpost.dexdrip.healthconnect.HealthConnectEntry;
 import com.eveningoutpost.dexdrip.healthconnect.HealthGamut;
 import com.eveningoutpost.dexdrip.insulin.inpen.InPenEntry;
+import com.eveningoutpost.dexdrip.nocturne.NocturneConnectHelper;
 import com.eveningoutpost.dexdrip.models.DesertSync;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.models.Profile;
@@ -152,6 +153,7 @@ import java.net.URI;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -293,9 +295,11 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 if (prefsmap.containsKey(getString(R.string.all_settings_wizard))) {
                     if (prefsmap.containsKey(getString(R.string.wizard_key))
                             && prefsmap.containsKey(getString(R.string.wizard_uuid))) {
-                        staticKey = CipherUtils.hexToBytes(prefsmap.get(getString(R.string.wizard_key)));
+                        GenericConfirmDialog.show(this, gs(R.string.are_you_sure), gs(R.string.import_qr_code_wizard_warning), () -> {
+                            staticKey = CipherUtils.hexToBytes(prefsmap.get(getString(R.string.wizard_key)));
 
-                        new WebAppHelper(new ServiceCallback()).executeOnExecutor(xdrip.executor, getString(R.string.wserviceurl) + "/joh-getsw/" + prefsmap.get(getString(R.string.wizard_uuid)));
+                            new WebAppHelper(new ServiceCallback()).executeOnExecutor(xdrip.executor, getString(R.string.wserviceurl) + "/joh-getsw/" + prefsmap.get(getString(R.string.wizard_uuid)));
+                        });
                     } else {
                         Log.d(TAG, "Incorrectly formatted wizard pref");
                     }
@@ -1044,6 +1048,25 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                         .getString(preference.getKey(), ""));
     }
 
+    private static void bindPreferenceSummaryToValueAndWarnIfMuted(final Activity activity, final Preference preference) { // Volume profile summary and mute alert warning
+        bindPreferenceSummaryToValue(preference);
+        if (preference == null) return;
+        preference.setOnPreferenceChangeListener((pref, newValue) -> {
+            final String value = String.valueOf(newValue);
+            if (!"Silent".equals(value) && !"vibrate only".equals(value)) {
+                return sBindPreferenceSummaryToValueListener.onPreferenceChange(pref, newValue);
+            }
+            GenericConfirmDialog.show(activity, xdrip.gs(R.string.alert_volume_profile), xdrip.gs(R.string.volume_profile_will_be_muted,
+                    xdrip.gs(R.string.volume_profile_silent),
+                    xdrip.gs(R.string.volume_profile_vibrate_only),
+                    xdrip.gs(R.string.override_silent_mode)), () -> {
+                ((ListPreference) pref).setValue(value);
+                sBindPreferenceSummaryToValueListener.onPreferenceChange(pref, value);
+            });
+            return false;   // defer the save to the confirm callback
+        });
+    }
+
     public static void applyPrefSettingRange(String pref_key, String def, Double min, Double max) { // Correct a preference glucose setting if the value is out of range
         val notificationId = OUT_OF_RANGE_GLUCOSE_ENTRY_ID;
         String mySettingString = Pref.getString(pref_key, def);
@@ -1075,6 +1098,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
     public static class AllPrefsFragment extends PreferenceFragment {
 
         final String jumpTo;
+        /** The NFC settings {@link #show_nfc_settings_for} can take off the screen, kept to put them back. */
+        private final Map<String, Preference> nfcSettingsByKey = new HashMap<>();
 
         @Setter
         Preferences parent;
@@ -1139,7 +1164,8 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             bindPreferenceSummaryToValue(units_pref);
 
             addPreferencesFromResource(R.xml.pref_notifications);
-            bindPreferenceSummaryToValue(findPreference("bg_alert_profile"));
+            bindPreferenceSummaryToValueAndWarnIfMuted(getActivity(), findPreference("bg_alert_profile"));
+
             bindPreferenceSummaryToValue(findPreference("calibration_notification_sound"));
             bindPreferenceSummaryToValueAndEnsureNumeric(findPreference("calibration_snooze"));
             bindPreferenceSummaryToValueAndEnsureNumeric(findPreference("bg_unclear_readings_minutes"));
@@ -1159,6 +1185,18 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
             bindPreferenceSummaryToValue(findPreference("cloud_storage_mongodb_uri"));
             bindPreferenceSummaryToValue(findPreference("cloud_storage_mongodb_collection"));
             bindPreferenceSummaryToValue(findPreference("cloud_storage_mongodb_device_status_collection"));
+
+            final Preference nocturneConnectPref = findPreference("nocturne_connect");
+            if (nocturneConnectPref != null) {
+                nocturneConnectPref.setOnPreferenceClickListener(preference -> {
+                    NocturneConnectHelper.startConnectFlow(getActivity());
+                    return true;
+                });
+            }
+            final Preference nocturneUrlPref = findPreference("nocturne_instance_url");
+            if (nocturneUrlPref != null) {
+                bindPreferenceSummaryToValue(nocturneUrlPref);
+            }
 
             addPreferencesFromResource(R.xml.pref_advanced_settings);
             addPreferencesFromResource(R.xml.xdrip_plus_prefs);
@@ -1308,17 +1346,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
 
             profile_carb_absorption_default.setTitle(format_carb_absorption_rate(profile_carb_absorption_default.getTitle().toString(), this.prefs.getString("profile_carb_absorption_default", "")));
 
-
-            refresh_extra_items();
-            findPreference("plus_extra_features").setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    Home.invalidateMenu = true; // force redraw
-                    refresh_extra_items();
-
-                    return true;
-                }
-            });
 
             final Preference crash_reports = findPreference("enable_crashlytics");
             crash_reports.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -2026,7 +2053,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 });
             //}
 
-            if (!DexCollectionType.hasLibre(collectionType)) {
+            if (!DexCollectionType.hasNfcScan(collectionType)) {
                 collectionCategory.removePreference(nfcSettings);
             } else {
                 // has libre
@@ -2038,6 +2065,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     }
                 set_nfc_expiry_change_listeners();
                 update_nfc_expiry_preferences(null);
+                show_nfc_settings_for(collectionType);
             }
 
             if (!DexCollectionService.getBestLimitterHardwareName().equals("BlueReader")) {
@@ -2254,7 +2282,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     preference.setSummary(newValue.toString());
-                    ParakeetHelper.notifyOnNextCheckin(true);
                     return true;
                 }
             });
@@ -2543,8 +2570,9 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                         AllPrefsFragment.this.prefs.edit().putBoolean("calibration_notifications", false).apply();
                     }
 
-                    if (DexCollectionType.hasLibre(collectionType)) {
+                    if (DexCollectionType.hasNfcScan(collectionType)) {
                         collectionCategory.addPreference(nfcSettings);
+                        show_nfc_settings_for(collectionType);
                         NFCReaderX.handleHomeScreenScanPreference(xdrip.getAppContext(), prefs.getBoolean("nfc_scan_homescreen", false) && prefs.getBoolean("use_nfc_scan", false));
                         if (!engineering_mode)
                             try {
@@ -2650,7 +2678,7 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                             if (AllPrefsFragment.this.prefs.getBoolean("plus_follow_master",false))
                             {
                                 AllPrefsFragment.this.prefs.edit().putBoolean("plus_follow_master", false).apply();
-                                JoH.static_toast(preference.getContext(),"Turning off xDrip+ Sync Master for Followers!",Toast.LENGTH_LONG);
+                                JoH.static_toast(preference.getContext(),"Turning off xDrip Sync Master for Followers!",Toast.LENGTH_LONG);
                             }
                             GcmActivity.requestBGsync();
                         }
@@ -2799,6 +2827,29 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     return true;
                 }
             });
+        }
+
+        /** Hides the NFC settings the collector never reads, and brings them back when the source changes again. */
+        private void show_nfc_settings_for(DexCollectionType collectionType) {
+            try {
+                final PreferenceScreen nfcScreen = (PreferenceScreen) findPreference("xdrip_plus_nfc_settings");
+                final List<String> unused = Li3Nfc.unusedNfcSettings(collectionType);
+                for (final String key : Li3Nfc.unusedNfcSettings(DexCollectionType.Li3)) {
+                    // the expiry days may already be off the screen, so that one comes from its field
+                    final Preference preference = nfcSettingsByKey.computeIfAbsent(key,
+                            k -> k.equals("nfc_expiry_days") ? nfc_expiry_days : findPreference(k));
+                    if (unused.contains(key)) {
+                        nfcScreen.removePreference(preference);
+                    } else if (!key.equals("nfc_expiry_days")) {
+                        nfcScreen.addPreference(preference);
+                    }
+                }
+                if (unused.isEmpty()) {
+                    update_nfc_expiry_preferences(null);
+                }
+            } catch (NullPointerException e) {
+                UserError.Log.e(TAG, "Could not update the NFC settings: " + e);
+            }
         }
 
         private void update_nfc_expiry_preferences(Boolean show_age) {
@@ -3028,20 +3079,6 @@ public class Preferences extends BasePreferenceActivity implements SearchPrefere
                     return true;
                 }
             });
-        }
-
-        private void refresh_extra_items() {
-            try {
-                if (this.prefs == null) return;
-                if (!this.prefs.getBoolean("plus_extra_features", false)) {
-                    // getPreferenceScreen().removePreference(findPreference("plus_follow_master"));
-
-                } else {
-                    // getPreferenceScreen().addPreference(findPreference("plus_follow_master"));
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Got exception in refresh extra: " + e.toString());
-            }
         }
 
         public void jumpToScreen(final String screenKey) {

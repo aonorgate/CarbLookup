@@ -48,12 +48,13 @@ public class SourceWizard {
             libre.addChild(new Item(gs(R.string.bluetooth_bridge_device_blucon_limitter_bluereader_tomato_etc), DexCollectionType.LimiTTer, R.drawable.bluereader_icon));
             libre.addChild(new Item(gs(R.string.librealarm_app_using_sony_smartwatch), DexCollectionType.LibreAlarm, R.drawable.ic_watch_grey600_48dp));
             libre.addChild(new Item(gs(R.string.libre_patched), DexCollectionType.LibreReceiver, R.drawable.libre_icon_image));
+            libre.addChild(new Item("Li3", DexCollectionType.Li3, R.drawable.libre_icon_image));
 
         }
         Tree<Item> other = root.addChild(new Item(gs(R.string.other), gs(R.string.which_type_of_device), R.drawable.wikimedia_question_mark));
         {
             other.addChild(new Item("xDrip Sync Follower", DexCollectionType.Follower, R.drawable.x_sync_follow_icon));
-            other.addChild(new Item("640G / 670G", DexCollectionType.NSEmulator, R.drawable.mm600_series));
+            other.addChild(new Item("Inter-app broadcast", DexCollectionType.NSEmulator, R.drawable.mm600_series));
             other.addChild(new Item("CareSens Air", DexCollectionType.NSEmulator, R.drawable.caresens_air_icon_image));
             other.addChild(new Item("Medtrum A6 / S7", DexCollectionType.Medtrum, R.drawable.a6_icon));
             other.addChild(new Item("SmartGuide", DexCollectionType.GluPro,R.drawable.smartguide_jamorham));

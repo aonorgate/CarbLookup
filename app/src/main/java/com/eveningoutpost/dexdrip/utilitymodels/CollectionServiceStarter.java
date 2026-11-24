@@ -3,11 +3,9 @@ package com.eveningoutpost.dexdrip.utilitymodels;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
-import com.eveningoutpost.dexdrip.BuildConfig;
 import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.models.JoH;
@@ -30,6 +28,7 @@ import static com.eveningoutpost.dexdrip.utils.DexCollectionType.SHFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.WebFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.CLFollow;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.GluPro;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Li3;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getCollectorServiceClass;
 
 /**
@@ -235,6 +234,7 @@ public class CollectionServiceStarter {
         JoH.stopService(getCollectorServiceClass(WebFollow));
         JoH.stopService(getCollectorServiceClass(CLFollow));
         JoH.stopService(getCollectorServiceClass(GluPro));
+        JoH.stopService(getCollectorServiceClass(Li3));
     }
 
     private void start(Context context, String collection_method) {
@@ -253,7 +253,7 @@ public class CollectionServiceStarter {
             if (prefs.getBoolean("wear_sync", false)) {//KS
                 boolean enable_wearG5 = prefs.getBoolean("enable_wearG5", false);
                 boolean force_wearG5 = prefs.getBoolean("force_wearG5", false);
-                startServiceCompat(WatchUpdaterService.class);
+                startPlainServiceCompat(WatchUpdaterService.class);
                 if (!enable_wearG5 || (enable_wearG5 && !force_wearG5)) { //don't start if Wear G5 Collector Service is active
                     startBtWixelService();
                 }
@@ -278,7 +278,7 @@ public class CollectionServiceStarter {
             if (prefs.getBoolean("wear_sync", false)) {//KS
                 boolean enable_wearG5 = prefs.getBoolean("enable_wearG5", false);
                 boolean force_wearG5 = prefs.getBoolean("force_wearG5", false);
-                startServiceCompat(new Intent(context, WatchUpdaterService.class));
+                startPlainServiceCompat(new Intent(context, WatchUpdaterService.class));
                 if (!enable_wearG5 || (enable_wearG5 && !force_wearG5)) { //don't start if Wear G5 Collector Service is active
                     startBtShareService();
                 }
@@ -295,7 +295,7 @@ public class CollectionServiceStarter {
             if (prefs.getBoolean("wear_sync", false)) {//KS
                 boolean enable_wearG5 = prefs.getBoolean("enable_wearG5", false);
                 boolean force_wearG5 = prefs.getBoolean("force_wearG5", false);
-                startServiceCompat(new Intent(context, WatchUpdaterService.class));
+                startPlainServiceCompat(new Intent(context, WatchUpdaterService.class));
                 if (!enable_wearG5 || (enable_wearG5 && !force_wearG5)) { //don't start if Wear G5 Collector Service is active
                     startBtG5Service();
                 } else {
@@ -320,7 +320,7 @@ public class CollectionServiceStarter {
             if (prefs.getBoolean("wear_sync", false)) {//KS
                 boolean enable_wearG5 = prefs.getBoolean("enable_wearG5", false);
                 boolean force_wearG5 = prefs.getBoolean("force_wearG5", false);
-                startServiceCompat(new Intent(context, WatchUpdaterService.class));
+                startPlainServiceCompat(new Intent(context, WatchUpdaterService.class));
                 if (!enable_wearG5 || (enable_wearG5 && !force_wearG5)) { //don't start if Wear G5 Collector Service is active
                     startBtWixelService();
                 }
@@ -507,17 +507,27 @@ public class CollectionServiceStarter {
 
     @SuppressWarnings("ConstantConditions")
     private void startServiceCompat(final Intent intent) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-            //    && BuildConfig.targetSDK >= Build.VERSION_CODES.N
-                && ForegroundServiceStarter.shouldRunCollectorInForeground()) {
-            try {
-                Log.d(TAG, String.format("Starting oreo foreground service: %s", intent.getComponent().getClassName()));
-            } catch (NullPointerException e) {
-                Log.d(TAG, "Null pointer exception in startServiceCompat");
-            }
+        try {
+            Log.d(TAG, String.format("Starting foreground service: %s", intent.getComponent().getClassName()));
             mContext.startForegroundService(intent);
-        } else {
+        } catch (Exception e) {
+            // If foreground fails (e.g. app is already in foreground), fall back to standard start
             mContext.startService(intent);
+        }
+    }
+
+    private void startPlainServiceCompat(final Class service) {
+        startPlainServiceCompat(new Intent(xdrip.getAppContext(), service));
+    }
+
+    // Starts a service which does not run itself in the foreground.
+    @SuppressWarnings("ConstantConditions")
+    private void startPlainServiceCompat(final Intent intent) {
+        try {
+            Log.d(TAG, String.format("Starting service: %s", intent.getComponent().getClassName()));
+            mContext.startService(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Could not start service: " + e);
         }
     }
 

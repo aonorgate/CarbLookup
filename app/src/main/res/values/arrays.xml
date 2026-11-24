@@ -3,7 +3,7 @@
     <string-array name="DexCollectionMethods">
         <item>Bluetooth Wixel</item>
         <item>xBridge Wixel</item>
-        <item>Wifi Wixel / Parakeet</item>
+        <item>Wifi Wixel</item>
         <item>Wifi Wixel + BT Wixel</item>
         <item>Wifi Wixel + xBridge Wixel</item>
         <item>Dex</item>
@@ -13,7 +13,7 @@
         <item>xDrip+ Sync Follower</item>
         <item>LibreAlarm</item>
         <item>Libre (patched App)</item>
-        <item>640G / EverSense</item>
+        <item>Inter-app broadcast</item>
         <item>Medtrum A6</item>
         <item>Nightscout Follower</item>
         <item>Dex Share Follower</item>
@@ -22,6 +22,7 @@
         <item>SmartGuide</item>
         <item>GlucoRx/Aidex App</item>
         <item>CareLink Follower</item>
+        <item>Li3</item>
         <item>@string/disable_collection</item>
     </string-array>
 
@@ -47,7 +48,18 @@
         <item>GluPro</item>
         <item>AidexReceiver</item>
         <item>CLFollower</item>
+        <item>Li3</item>
         <item>Disabled</item>
+    </string-array>
+
+     <string-array name="Li3FoldEntries">
+        <item>@string/li3_fold_li3_app</item>
+        <item>@string/li3_fold_multi_sensor_app</item>
+    </string-array>
+
+    <string-array name="Li3FoldValues" translatable="false">
+        <item>LI3_APP</item>
+        <item>MULTI_SENSOR_APP</item>
     </string-array>
 
      <string-array name="EnableStreamingMethods">
@@ -91,7 +103,7 @@
         <item>Standard Watchface (old)</item>
         <item>Color Trend Watchface</item>
         <item>Pebble Classic Trend Watchface</item>
-        <item>Pebble Trend Clay Version (test)</item>
+        <item>Pebble Trend Clay Version (All Models)</item>
     </string-array>
     <string-array name="SendToPebbleChoiceValues">
 

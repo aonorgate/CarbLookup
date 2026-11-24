@@ -2,7 +2,7 @@ package com.eveningoutpost.dexdrip.models;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.provider.BaseColumns;
 import androidx.annotation.NonNull;
 import android.widget.Toast;
@@ -34,7 +34,6 @@ import com.eveningoutpost.dexdrip.xdrip;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
-import com.google.gson.internal.bind.DateTypeAdapter;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -280,6 +279,7 @@ public class Calibration extends Model {
     public double second_scale;
 
     public static void initialCalibration(double bg1, double bg2, Context context) {
+        if (refuseCalibration()) return;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String unit = prefs.getString("units", "mgdl");
         if (unit.compareTo("mgdl") != 0) {
@@ -565,6 +565,8 @@ public class Calibration extends Model {
 
         bg = result; // unbox result
 
+        if (!note_only && refuseCalibration()) return null;
+
         if (!note_only) CalibrationRequest.clearAll();
         final Calibration calibration = new Calibration();
         Sensor sensor = Sensor.currentSensor();
@@ -658,6 +660,14 @@ public class Calibration extends Model {
             Log.d("CALIBRATION", "No sensor, cant save!");
         }
         return Calibration.last();
+    }
+
+    // no calibration for this data source (at least, not yet)
+    private static boolean refuseCalibration() {
+        if (!DexCollectionType.isNoCalibration()) return false;
+        Log.uel(TAG, "Calibration not used: " + DexCollectionType.getDexCollectionType() + " cannot be calibrated");
+        JoH.static_toast_long(xdrip.gs(R.string.sensor_cannot_be_calibrated));
+        return true;
     }
 
     public static List<Calibration> allForSensorInLastFiveDays() {
@@ -1026,7 +1036,6 @@ public class Calibration extends Model {
     public String toS() {
         Gson gson = new GsonBuilder()
                 .excludeFieldsWithoutExposeAnnotation()
-                .registerTypeAdapter(Date.class, new DateTypeAdapter())
                 .serializeSpecialFloatingPointValues()
                 .create();
         return gson.toJson(this);

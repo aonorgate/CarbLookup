@@ -1538,11 +1538,6 @@
                     android:key="collector_in_foreground"
                     android:title="@string/title_collector_in_foreground">
                     <CheckBoxPreference
-                        android:defaultValue="true"
-                        android:key="run_service_in_foreground"
-                        android:summary="@string/shows_a_persistent_notification"
-                        android:title="@string/run_collector_in_foreground" />
-                    <CheckBoxPreference
                         android:defaultValue="false"
                         android:key="compact_persistent_notification"
                         android:summary="@string/summary_compact_ongoing_notification"
@@ -1609,6 +1604,32 @@
                     android:summary="@string/retrieve_blukon_history_summary"
                     android:title="@string/retrieve_blukon_history_title" />
 
+                <PreferenceScreen
+                    android:key="li3_settings"
+                    android:summary="@string/li3_settings_summary"
+                    android:title="Li3">
+
+                    <EditTextPreference
+                        android:defaultValue=""
+                        android:key="li3_account_id"
+                        android:summary="@string/li3_account_id_summary"
+                        android:title="@string/li3_account_id_title" />
+
+                    <ListPreference
+                        android:defaultValue="LI3_APP"
+                        android:entries="@array/Li3FoldEntries"
+                        android:entryValues="@array/Li3FoldValues"
+                        android:key="li3_fold"
+                        android:summary="@string/li3_fold_summary"
+                        android:title="@string/li3_fold_title" />
+
+                    <CheckBoxPreference
+                        android:defaultValue="false"
+                        android:key="li3_smoothing"
+                        android:summary="@string/li3_smoothing_summary"
+                        android:title="@string/li3_smoothing_title" />
+                </PreferenceScreen>
+
                 <CheckBoxPreference
                     android:defaultValue="false"
                     android:enabled="true"
@@ -1618,11 +1639,10 @@
 
                 <CheckBoxPreference
                     android:defaultValue="false"
-                    android:dependency="engineering_mode"
                     android:enabled="true"
                     android:key="Eversense_one_minute"
-                    android:summary="Accept data at one-minute intervals from 640G/Eversense. WARNING: This feature is still under development and may break different things. Please report anything you notice not working. Reboot your phone for changes to take effect. Requires engineering mode"
-                    android:title="640G/Eversense 1-minute" />
+                    android:summary="Accept data at one-minute intervals from Inter-app broadcast.  Reboot your phone for changes to take effect."
+                    android:title="1-min Inter-app broadcast" />
 
                 <CheckBoxPreference
                     android:defaultValue="false"
